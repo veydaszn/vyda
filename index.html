@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vyda - Your Virtual Assistant</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #chat-container {
+            width: 100%;
+            max-width: 500px;
+            height: 80vh; /* Adjust height for better mobile viewing */
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        #chat-display {
+            flex-grow: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background-color: #f9fafb; /* Slightly off-white for chat background */
+            scroll-behavior: smooth; /* Smooth scrolling for new messages */
+        }
+        .message-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1.25rem;
+            border-radius: 1.25rem; /* Rounded bubbles */
+            line-height: 1.4;
+            word-wrap: break-word; /* Ensure long words wrap */
+        }
+        .user-message {
+            align-self: flex-end;
+            background-color: #6366f1; /* Indigo for user */
+            color: #ffffff;
+            border-bottom-right-radius: 0.25rem; /* Sharper corner on one side for user */
+        }
+        .vyda-message {
+            align-self: flex-start;
+            background-color: #e0e7ff; /* Lighter indigo for Vyda */
+            color: #1f2937;
+            border-bottom-left-radius: 0.25rem; /* Sharper corner on one side for Vyda */
+        }
+        #chat-input-area {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+            background-color: #ffffff;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            outline: none;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        #user-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        #send-button {
+            margin-left: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #4f46e5; /* Stronger indigo */
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #send-button:hover {
+            background-color: #4338ca; /* Darker indigo on hover */
+            transform: translateY(-1px);
+        }
+        #send-button:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            #chat-container {
+                height: 95vh;
+                max-width: 95%;
+                border-radius: 1rem;
+            }
+            #chat-display {
+                padding: 1rem;
+            }
+            .message-bubble {
+                padding: 0.6rem 1rem;
+                border-radius: 1rem;
+                font-size: 0.9rem;
+            }
+            #chat-input-area {
+                padding: 0.75rem;
+            }
+            #user-input {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            #send-button {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Typing indicator styles */
+        .typing-indicator span {
+            display: inline-block;
+            background-color: #9ca3af;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-display">
+            <!-- Initial Vyda message -->
+            <div class="message-bubble vyda-message">
+                Hello! I'm Vyda, your virtual assistant. How can I help you today?
+                Try typing 'help' to see what I can do.
+            </div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Get references to HTML elements
+        const chatDisplay = document.getElementById('chat-display');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+
+        // Function to add a message to the chat display
+        function addMessage(sender, message) {
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble');
+            if (sender === 'user') {
+                messageBubble.classList.add('user-message');
+            } else {
+                messageBubble.classList.add('vyda-message');
+            }
+            messageBubble.textContent = message;
+            chatDisplay.appendChild(messageBubble);
+            // Scroll to the bottom to show the latest message
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
+        }
+
+        // Simulate Vyda typing
+        function showTypingIndicator() {
+            const typingIndicator = document.createElement('div');
+            typingIndicator.classList.add('message-bubble', 'vyda-message', 'typing-indicator');
+            typingIndicator.innerHTML = `
+                <span></span>
+                <span></span>
+                <span></span>
+            `;
+            chatDisplay.appendChild(typingIndicator);
+            chatDisplay.scrollTop = chatDisplay.scrollHeight; // Scroll to indicator
+            return typingIndicator;
+        }
+
+        function removeTypingIndicator(indicatorElement) {
+            if (indicatorElement && chatDisplay.contains(indicatorElement)) {
+                chatDisplay.removeChild(indicatorElement);
+            }
+        }
+
+        // Function to get Vyda's response based on user input
+        function getVydaResponse(message) {
+            const lowerCaseMessage = message.toLowerCase().trim();
+            let response = "I'm sorry, I don't understand that command. Try 'help' for a list of things I can do.";
+
+            // Basic conditional responses
+            if (lowerCaseMessage.includes('hello') || lowerCaseMessage.includes('hi')) {
+                response = "Hello there! How can I assist you?";
+            } else if (lowerCaseMessage.includes('how are you')) {
+                response = "I'm just a program, but I'm functioning perfectly! Thanks for asking.";
+            } else if (lowerCaseMessage.includes('what time is it') || lowerCaseMessage === 'time') {
+                const now = new Date();
+                response = `The current time is ${now.toLocaleTimeString()}.`;
+            } else if (lowerCaseMessage.includes('what is the date') || lowerCaseMessage === 'date') {
+                const now = new Date();
+                response = `Today's date is ${now.toLocaleDateString()}.`;
+            } else if (lowerCaseMessage.includes('2+2')) {
+                response = "2 + 2 equals 4.";
+            } else if (lowerCaseMessage.includes('joke')) {
+                const jokes = [
+                    "Why don't scientists trust atoms? Because they make up everything!",
+                    "What do you call a fake noodle? An impasta!",
+                    "Why did the scarecrow win an award? Because he was outstanding in his field!",
+                    "I told my wife she was drawing her eyebrows too high. She looked surprised."
+                ];
+                response = jokes[Math.floor(Math.random() * jokes.length)];
+            } else if (lowerCaseMessage === 'help') {
+                response = "Here are some things I can do:\n- Say 'hello' or 'hi'\n- Ask 'how are you'\n- Ask 'what time is it' or 'time'\n- Ask 'what is the date' or 'date'\n- Ask '2+2'\n- Ask me to 'joke'";
+            }
+
+            return response;
+        }
+
+        // Event listener for the send button
+        sendButton.addEventListener('click', () => {
+            const message = userInput.value;
+            if (message.trim() !== '') {
+                addMessage('user', message);
+                userInput.value = ''; // Clear input field
+
+                // Show typing indicator
+                const typingIndicator = showTypingIndicator();
+
+                // Simulate a delay before Vyda responds
+                setTimeout(() => {
+                    removeTypingIndicator(typingIndicator);
+                    const response = getVydaResponse(message);
+                    addMessage('vyda', response);
+                }, 1000); // 1-second delay
+            }
+        });
+
+        // Event listener for Enter key in the input field
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendButton.click(); // Trigger the send button click
+            }
+        });
+    </script>
+</body>
+</html>
